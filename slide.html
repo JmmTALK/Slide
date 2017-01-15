@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>焦点图面向对象完成</title>
+	<style>
+		*{margin:0;padding:0;}
+		body{
+			background-color: #000;
+		}
+		img{
+			vertical-align: middle;
+		}
+		#banner2{
+			width: 600px;
+			height: 450px;		/* 整体高度在这里设置，如果你愿意可以用js改变高度为图片高度 */
+		}
+		#banner1{
+			width: 400px;
+			height: 307px;		/* 整体高度在这里设置，如果你愿意可以用js改变高度为图片高度 */
+		}
+		.banner{
+			width: 400px;
+			height: 307px;		/* 整体高度在这里设置，如果你愿意可以用js改变高度为图片高度 */
+			border:5px solid #ccc;
+			margin:100px auto;
+			position: relative;
+		}
+		.banner div{
+			height:100%;
+			width: 100%;
+			position: relative;
+			overflow: hidden;
+		}
+		.banner ul{
+			list-style: none;
+			height:100%;
+			width: 100000%;
+			position: absolute;
+			top:0;
+			left:-100%;
+			transition:all 0.5s linear 0s;
+		}
+		.banner ul li{
+			width:0.1%;
+			height:100%;
+			float: left;
+			position: relative;
+		}
+		.banner ul li img{
+			width:100%;
+			height:100%;
+		}
+		.banner ol{
+			list-style: none;
+			position: absolute;
+			/*width: 138px;*/
+			height: 13px;
+			bottom:-26px;
+			left:50%;
+			transform:translateX(-50%);
+		}
+		.banner ol li{
+			width: 13px;
+			height: 13px;
+			margin:5px;
+			background:url('images/72/00.png') no-repeat;
+			float: left;
+			cursor:pointer;
+		}
+		.banner ol li.cur{
+			background:url('images/72/00.png') no-repeat left -26px;
+		}
+		.banner span{
+			width: 52px;
+			height: 52px;
+			background:url('images/72/arr.png') no-repeat;
+			position: absolute;
+			top:50%;
+			margin-top:-26px;
+			cursor:pointer;
+			transition:all 0.2s ease 0s;
+			opacity:0;
+		}
+		.banner span.left_btn{
+			left:-10px;
+		}
+		.banner span.right_btn{
+			right:-10px;
+			background:url('images/72/arr.png') no-repeat -52px top;
+		}
+		.banner p{
+			width:100%;
+			height:50px;
+			background-color:rgba(0,0,0,0.5);
+			color:#fff;
+			position: absolute;
+			bottom:0px;
+			left:0px;
+			line-height:50px;
+			text-align: center;
+		}
+	</style>
+	</script>
+	<script>
+		/************************工具包**********************/
+		function $(id){
+			return document.getElementById(id)
+		}
+
+		function $get(id,tagName){
+			if(typeof id =='string' && $(id) ){
+				return $(id).getElementsByTagName(tagName);
+			}else if(typeof id == 'object'){
+				return id.getElementsByTagName(tagName);
+			}else{
+				throw ('$get参数有误，请修改')
+			}
+		}
+		function $class(parent,className){
+			if(typeof parent =='object')
+				return parent.getElementsByClassName(className);
+			else
+				throw ('$class参数有误，请修改')
+		}
+		function $create(tagName){
+			return document.createElement(tagName);
+		}
+
+		function extend(conf,defaultConf){
+			for(var p in defaultConf){
+				if(conf.hasOwnProperty(p)){
+					defaultConf[p]=conf[p];
+				}
+			}
+		}
+	</script>
+</head>
+<body>
+	<!--模板开始-->
+	<div id="banner1" class="banner">
+		<div>
+			<ul>
+				<li><img src="images/72/01.jpg" alt="图片1"></li>
+				<li><img src="images/72/02.jpg" alt="图片2"></li>
+				<li><img src="images/72/03.jpg" alt="图片3"></li>
+				<li><img src="images/72/04.jpg" alt="图片4"></li>
+				<li><img src="images/72/05.jpg" alt="图片5"></li>
+				<li><img src="images/72/06.jpg" alt="图片6"></li>
+			</ul>
+			
+		</div>
+		<span class="left_btn"></span>
+		<span class="right_btn"></span>
+	</div>
+	<!--模板结束-->
+
+
+	<div id="banner2" class="banner banner2">
+		<div>
+			<ul>
+				<li><img src="images/72/06.jpg" alt="图片6"></li>
+				<li><img src="images/72/01.jpg" alt="图片1"></li>
+				<li><img src="images/72/02.jpg" alt="图片2"></li>
+				<li><img src="images/72/03.jpg" alt="图片3"></li>
+				<li><img src="images/72/04.jpg" alt="图片4"></li>
+				<li><img src="images/72/05.jpg" alt="图片5"></li>
+				<li><img src="images/72/06.jpg" alt="图片6"></li>
+				<li><img src="images/72/02.jpg" alt="图片2"></li>
+				<li><img src="images/72/03.jpg" alt="图片3"></li>
+				<li><img src="images/72/05.jpg" alt="图片5"></li>
+				<li><img src="images/72/03.jpg" alt="图片3"></li>
+				<li><img src="images/72/01.jpg" alt="图片1"></li>
+			</ul>
+			
+		</div>
+		<span class="left_btn"></span>
+		<span class="right_btn"></span>
+	</div>
+</body>
+<script>
+;(function(window){
+	var speedList={
+		normal:2000,
+		faster:1000,
+		slower:3000
+	};
+	function Focus(id,conf){
+		//conf=conf||{};
+		var defaultConf={
+			isAuto:true,
+			speed:"normal",
+			initIndex:0,
+			listOlEvent:true
+		}
+		this.container=$(id);
+		this.ul=$get(this.container,'ul')[0];
+		this.ul_lis=$get($get(this.container,'ul')[0],'li');
+		this.len=this.ul_lis.length;							//与后面的ol索引值对上号，因为从ol入手较为方便。
+		this.left_btn=$class(this.container,'left_btn')[0];
+		this.right_btn=$class(this.container,'right_btn')[0];
+		creatImg.call(this);
+		//创建“第一个”，“最后一张图片”
+		extend(conf,defaultConf);
+		//将配置参数与默认参数比较，修改默认配置。
+		this.isAuto=defaultConf.isAuto;
+		this.speed=speedList[defaultConf.speed] || (typeof defaultConf.speed=='number'?Math.abs(defaultConf.speed):2000);
+		//如果speed参数在speedList中存在则使用speedList[defaultConf.speed]，否则 如果speed为数字则取speed的绝对值，否则取2000。
+		this.initIndex=typeof defaultConf.initIndex=='number'? defaultConf.initIndex:0;
+		//如果initIndex参数是数字则使用，如果不是则将this.initIndex=0。
+		this.listOlEvent=defaultConf.listOlEvent;
+		this.current=Math.abs(this.initIndex)%this.len;								//当前显示的索引，贯穿全局
+		//将this.initIndex去绝对值后取this.len的模，将结果赋值给this.current-----贯穿全局的绳索。
+		this.ol_lis=creatOL.call(this);
+		//创建ol。
+		this.p=creatP.call(this);
+		//创建显示说明的p标签。
+		init.call(this);
+		//初始化。
+		this.listOlEvent && eventBind_jiaobiao.call(this);
+		//给ol里的li绑定事件。
+		eventBind_btn.call(this);
+		//给左右按钮绑定事件。
+		this.isAuto && auto.call(this);
+		//如果this.isAuto为true，则开启auto功能(定时器)。
+		eventBind_showBtn.call(this);
+		//由于按钮显示消失特效与清除定时器都绑定在this.container上，而清除定时器事件在auto里，所以当this.isAuto==false,即不执行auto方法时，需要单独绑定按钮显示消失特效的事件。
+	};
+	var eventBind_showBtn=function(){
+		if(!this.isAuto){
+			var that=this;
+			this.container.onmouseenter=function(){
+				that.left_btn.style.opacity="1"
+				that.right_btn.style.opacity="1"
+				that.right_btn.style.right="-21px"
+				that.left_btn.style.left="-21px"
+			}
+			this.container.onmouseleave=function(){
+				that.left_btn.style.opacity="0"
+				that.right_btn.style.opacity="0"
+				that.right_btn.style.right="-10px"
+				that.left_btn.style.left="-10px"
+			}
+		}
+	};
+	var creatImg=function(){
+		//创建“第一个”，“最后一张图片”
+		var lastImg=this.ul_lis[0].cloneNode(true);
+		var firstImg=this.ul_lis[this.len-1].cloneNode(true);
+		this.ul.insertBefore(firstImg,this.ul_lis[0]);
+		this.ul.appendChild(lastImg);
+	}
+	var	init=function(){
+		this.go_jiaobiao(this.current);
+		this.go_img(this.current)
+		this.p.innerHTML=$get(this.ul_lis[this.current+1],"img")[0].alt;
+		//由于该案例是无缝滚动，ul里li的索引值比ol里li大一个，所以上面需要+1。
+	};
+	var	creatP=function(){
+			var p=$create('p');
+			this.container.appendChild(p);
+			return p;										//创建P标签并放入容器
+	};
+	var	creatOL=function(){						//创建脚标
+		var ol=$create('ol'),lis=[];
+		for(var i=0;i<this.len;i++){
+			var li=$create('li');
+			lis.push(li);
+			ol.appendChild(li)
+		}
+		this.container.appendChild(ol);
+		return lis;
+	};
+	var	eventBind_jiaobiao=function(){
+		var that=this
+		for(var i=0;i<this.len;i++){
+			this.ol_lis[i].onmouseenter=function(index){				//用IIFE构成闭包，给每个li绑定事件
+				var locked=false;
+				return function(){
+					if(!locked){
+						if(that.current==0&&index==that.len-1){			//第一张向最后一张无缝跳转
+							locked=true;
+							that.left_btn.onclick();
+							that.current=index;
+							setTimeout(function(){
+								locked=false;
+							},500)							//动画结束之前防流氓
+						}else if(that.current==that.len-1&&index==0){	//最后一张向第一张无缝跳转
+							locked=true;
+							that.right_btn.onclick();
+							that.current=index;
+							setTimeout(function(){
+								locked=false;
+							},500)							//动画结束之前防流氓
+						}else{
+							that.go_jiaobiao(index);
+							that.go_img(index);
+						}
+					}
+					
+				}
+			}(i)
+		}
+	};
+	var	eventBind_btn=function(){
+		var that=this;
+		var clicked=false;
+		this.left_btn.onclick=function(){
+			if(!clicked){
+				that.current-=1;
+				if(that.current<0){
+					//在第一张显示时点击左按钮
+					that.go_img(that.current);
+					//先把动画做了，显示“最后一张”
+					that.current=that.len-1;
+					setTimeout(function(){										//动画结束之后“归位”，回到真正的最后一张
+						that.ul.style.transition="none";
+						//“归位”时需清除C3的过度动画，否则会以动画形式跳转，达不到无缝效果
+						that.ul.style.left="-"+that.len*100+"%";
+					},500)
+				}else{
+					that.go_img(that.current);
+					//正常情况点击按钮
+				}
+				that.go_jiaobiao(that.current);
+				//无论怎样，脚标的工作不变
+				clicked=true;
+				//上锁！
+				setTimeout(function(){
+					clicked=false;		//500ms后解锁
+				},500)											//动画结束之前防流氓
+			}else
+				return;
+		}
+		this.right_btn.onclick=function(){
+			if(!clicked){
+				that.current+=1;
+				if(that.current>=that.len){
+					//在最后显示时点击左按钮
+					that.go_img(that.current);
+					//先把动画做了，显示“第一张”
+					that.current=0;
+					setTimeout(function(){
+						that.ul.style.transition="none"
+						//“归位”时需清除C3的过度动画，否则会以动画形式跳转，达不到无缝效果
+						that.ul.style.left="-"+100+"%"
+					},500)											//动画结束后“归位”，回到真正的第一张
+				}else{
+					that.go_img(that.current);
+					//正常情况点击按钮
+				}
+				that.go_jiaobiao(that.current);
+				//无论怎样，脚标的工作不变
+				clicked=true;
+				//上锁！
+				setTimeout(function(){
+					clicked=false;		//500ms后解锁
+				},500)											//动画结束之前防流氓
+			}else
+				return;
+		}
+	};
+	var	auto=function(){
+		var that=this;
+		var timer=setInterval(function(){
+			that.right_btn.onclick();
+			//模拟用户点击右按钮
+		},this.speed)
+		this.container.onmouseenter=function(){
+			clearInterval(timer);
+			that.left_btn.style.opacity="1"
+			that.right_btn.style.opacity="1"
+			that.right_btn.style.right="-21px"
+			that.left_btn.style.left="-21px"
+		}
+		this.container.onmouseleave=function(){
+			that.left_btn.style.opacity="0"
+			that.right_btn.style.opacity="0"
+			that.right_btn.style.right="-10px"
+			that.left_btn.style.left="-10px"
+			timer=setInterval(function(){
+				that.right_btn.onclick();
+				//模拟用户点击右按钮
+			},that.speed)
+		}
+	};
+	Focus.prototype.go_jiaobiao=function(currentIndex){
+		this.current=currentIndex;
+		//时刻更新this.current
+		for(var i=0;i<this.len;i++){
+			if(i==currentIndex)
+				this.ol_lis[i].className='cur';				//采用落空类的方法操作脚标
+			else
+				this.ol_lis[i].className='';
+		}
+	};
+	Focus.prototype.go_img=function(currentIndex){
+		this.ul.style.left=-(currentIndex+1)*100+'%';
+		this.ul.style.transition="all 0.5s linear 0s";
+		//由于特殊情况下清除了C3的过度动画，这里再次开启
+		this.p.innerHTML=$get(this.ul_lis[this.current+1],"img")[0].alt;	//动态改变P标签内容
+	};
+	window.Focus=Focus;
+})(window);
+	
+	var f1=new Focus('banner1',{'speed':1500,initIndex:0,isAuto:true,listOlEvent:true});//参数按要求格式写，乱写的都按默认配置来
+	var f2=new Focus('banner2',{speed:'ad'});
+	console.info(f1)
+</script>
+</html>
